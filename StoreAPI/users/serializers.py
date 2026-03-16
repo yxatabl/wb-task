@@ -1,6 +1,6 @@
 from rest_framework import serializers
-
 from users.models import User
+from django.contrib.auth import authenticate
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -17,7 +17,7 @@ class UserBalanceUpdateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['id', 'balance', 'amount']
+        fields = ('id', 'balance', 'amount')
 
     def update(self, instance : User, validated_data):
         amount = validated_data.pop('amount', 0)
@@ -26,3 +26,40 @@ class UserBalanceUpdateSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+
+class UserRegistrationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
+
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'password')
+    
+
+    def create(self, validated_data):
+        user = User.objects.create(**validated_data)
+        return user
+
+
+class UserLoginSerializer(serializers.ModelSerializer):
+    username = serializers.CharField()
+    password = serializers.CharField()
+    
+
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'password')
+
+    def validate(self, attrs):
+        username = attrs.get('username')
+        password = attrs.get('password')
+
+        if username and password:
+            user = authenticate(username=username, password=password)
+            if not user:
+                raise serializers.ValidationError('Invalid credentials')
+            attrs['user'] = user
+            return attrs
+        else:
+            raise serializers.ValidationError('Must provide username and password')
