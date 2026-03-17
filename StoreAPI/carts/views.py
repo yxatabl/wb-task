@@ -1,6 +1,6 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from .serializers import CartItemSerializer, CartSerializer
+from .serializers import AddToCartSerializer, CartSerializer, CartItemSerializer
 from .services import CartService
 
 
@@ -13,11 +13,11 @@ class CartView(generics.RetrieveAPIView):
 
 
 class AddToCartView(generics.CreateAPIView):
-    serializer_class = CartItemSerializer
+    serializer_class = AddToCartSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        serializer = CartItemSerializer(data=request.data)
+        serializer = AddToCartSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         cart_item = CartService.add_to_cart(
@@ -26,27 +26,27 @@ class AddToCartView(generics.CreateAPIView):
             quantity=serializer.validated_data['quantity']
         )
 
-        return cart_item
+        return Response(CartItemSerializer(cart_item).data, status=status.HTTP_201_CREATED)
 
 
 class RemoveFromCartView(generics.DestroyAPIView):
-    serializer_class = CartItemSerializer
+    serializer_class = AddToCartSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def destroy(self, request, *args, **kwargs):
-        serializer = CartItemSerializer(data=request.data)
+        serializer = AddToCartSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        CartService.remove_from_cart(serializer.validated_data['id'])
+        CartService.remove_from_cart(request.user, serializer.validated_data['product_id'])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class UpdateCartItemView(generics.UpdateAPIView):
-    serializer_class = CartItemSerializer
+    serializer_class = AddToCartSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def update(self, request, *args, **kwargs):
-        serializer = CartItemSerializer(data=request.data)
+        serializer = AddToCartSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        CartService.update_cart_item_quantity(serializer.validated_data['id'], serializer.validated_data['quantity'])
+        CartService.update_cart_item_quantity(serializer.validated_data['product_id'], serializer.validated_data['quantity'])

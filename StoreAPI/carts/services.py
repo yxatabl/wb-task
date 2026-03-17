@@ -27,8 +27,9 @@ class CartService:
         return cart_item
     
     @staticmethod
-    def remove_from_cart(item_id : int):
-        cart_item = CartItem.objects.get(id=item_id)
+    def remove_from_cart(user : User, product_id : int):
+        cart = CartService.get_or_create_cart(user)
+        cart_item = CartItem.objects.get(cart=cart, product_id=product_id)
         cart_item.delete()
     
 

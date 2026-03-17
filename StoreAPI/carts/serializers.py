@@ -5,7 +5,6 @@ from products.serializers import ProductSerializer
 
 class CartItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer()
-    product_id = serializers.IntegerField()
 
     class Meta:
         model = CartItem
@@ -18,3 +17,11 @@ class CartSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cart
         fields = ('id', 'items')
+    
+
+class AddToCartSerializer(serializers.Serializer):
+    product_id = serializers.IntegerField()
+    quantity = serializers.IntegerField(min_value=1)
+
+    class Meta:
+        fields = ('product_id', 'quantity')
