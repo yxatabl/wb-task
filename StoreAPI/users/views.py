@@ -4,22 +4,29 @@ from users.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 
-class UserList(generics.ListCreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [permissions.IsAdminUser]
 
-
-class UserDetails(generics.RetrieveUpdateDestroyAPIView):
-    queryset = User.objects.all()
+class UserView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
 
 
 class UserUpdateBalance(generics.UpdateAPIView):
     queryset = User.objects.all()
     serializer_class = UserBalanceUpdateSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def put(self, request, *args, **kwargs):
+        serializer = UserBalanceUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user : User = request.user
+        user.balance += serializer.validated_data['amount']
+        user.save()
+
+        return Response(UserSerializer(user).data)
 
 
 class UserRegistrationView(generics.CreateAPIView):
