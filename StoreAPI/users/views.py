@@ -1,46 +1,44 @@
 from rest_framework import generics, permissions, status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .serializers import UserBalanceUpdateSerializer, UserLoginSerializer, UserRegistrationSerializer, UserSerializer
-from .models import User
 
 
-class UserView(generics.RetrieveAPIView):
+class UserDetailView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
+    
+    def get_object(self):
+        return self.request.user
 
-    def get(self, request, *args, **kwargs):
-        return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
 
-
-class UserUpdateBalance(generics.UpdateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserBalanceUpdateSerializer
+class UserBalanceUpdateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-
-    def put(self, request, *args, **kwargs):
+    
+    def post(self, request, *args, **kwargs):
         serializer = UserBalanceUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        user : User = request.user
+        
+        user = request.user
         user.balance += serializer.validated_data['amount']
         user.save()
-
-        return Response(UserSerializer(user).data)
+        
+        return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
 
 
 class UserRegistrationView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
-
-    def post(self, request, *args, **kwargs):
+    
+    def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-
+        
         refresh = RefreshToken.for_user(user)
-
+        
         return Response({
             'user': UserSerializer(user).data,
             'refresh': str(refresh),
@@ -51,16 +49,16 @@ class UserRegistrationView(generics.CreateAPIView):
 class UserLoginView(generics.GenericAPIView):
     serializer_class = UserLoginSerializer
     permission_classes = [permissions.AllowAny]
-
+    
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
-
+        
         refresh = RefreshToken.for_user(user)
-
+        
         return Response({
             'user': UserSerializer(user).data,
             'refresh': str(refresh),
-            'access': str(refresh.access_token)
+            'access': str(refresh.access_token),
         })

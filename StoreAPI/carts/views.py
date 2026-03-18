@@ -1,7 +1,6 @@
-from rest_framework import generics, permissions, status
-from rest_framework.response import Response
+from rest_framework import generics, permissions
 
-from .serializers import AddToCartSerializer, CartSerializer, CartItemSerializer
+from .serializers import CartSerializer, CartItemSerializer
 from .services import CartService
 
 
@@ -13,42 +12,23 @@ class CartView(generics.RetrieveAPIView):
         return CartService.get_or_create_cart(self.request.user)
 
 
-class AddToCartView(generics.CreateAPIView):
-    serializer_class = AddToCartSerializer
+class CartItemListCreateView(generics.ListCreateAPIView):
+    serializer_class = CartItemSerializer
     permission_classes = [permissions.IsAuthenticated]
-
-    def post(self, request, *args, **kwargs):
-        serializer = AddToCartSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        cart_item = CartService.add_to_cart(
-            user=request.user,
-            product_id=serializer.validated_data['product_id'],
-            quantity=serializer.validated_data['quantity']
-        )
-
-        return Response(CartItemSerializer(cart_item).data, status=status.HTTP_201_CREATED)
+    
+    def get_queryset(self):
+        cart = CartService.get_or_create_cart(self.request.user)
+        return cart.items.all()
+    
+    def perform_create(self, serializer):
+        cart = CartService.get_or_create_cart(self.request.user)
+        serializer.save(cart=cart)
 
 
-class RemoveFromCartView(generics.DestroyAPIView):
-    serializer_class = AddToCartSerializer
+class CartItemDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = CartItemSerializer
     permission_classes = [permissions.IsAuthenticated]
-
-    def destroy(self, request, *args, **kwargs):
-        serializer = AddToCartSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        CartService.remove_from_cart(request.user, serializer.validated_data['product_id'])
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class UpdateCartItemView(generics.UpdateAPIView):
-    serializer_class = AddToCartSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def update(self, request, *args, **kwargs):
-        serializer = AddToCartSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        CartService.update_cart_item_quantity(serializer.validated_data['product_id'], serializer.validated_data['quantity'])
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    def get_queryset(self):
+        cart = CartService.get_or_create_cart(self.request.user)
+        return cart.items.all()

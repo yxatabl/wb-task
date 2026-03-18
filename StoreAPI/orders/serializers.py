@@ -16,3 +16,7 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ('id', 'order_items')
+
+
+class OrderCreateSerializer(serializers.Serializer):
+    pass

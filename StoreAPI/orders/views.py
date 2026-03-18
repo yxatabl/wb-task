@@ -1,27 +1,29 @@
-from rest_framework import generics, permissions, status
-from rest_framework.response import Response
+from rest_framework import generics, permissions
 
-from .serializers import OrderSerializer
+from .serializers import OrderSerializer, OrderCreateSerializer
 from .services import OrderService
 from .models import Order
 
 
-class OrdersView(generics.RetrieveAPIView):
+class OrderListCreateView(generics.ListCreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return OrderCreateSerializer
+        return OrderSerializer
+    
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user).order_by('-created_at')
+    
+    def perform_create(self, serializer):
+        order = OrderService.create_order(self.request.user)
+        serializer.instance = order
+
+
+class OrderDetailView(generics.RetrieveAPIView):
     serializer_class = OrderSerializer
-    permissions_classes = [permissions.IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        return Response(
-            OrderSerializer(Order.objects.filter(user=request.user), many=True).data,
-            status=status.HTTP_200_OK
-        )
-
-
-class CreateOrderView(generics.CreateAPIView):
-    serializer_class = OrderSerializer
-    permissions_classes = [permissions.IsAuthenticated]
-
-    def post(self, request, *args, **kwargs):
-        order = OrderService.create_order(request.user)
-        serializer = self.get_serializer(order)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user)
