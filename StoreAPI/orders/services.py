@@ -1,6 +1,12 @@
+import logging
+
 from users.models import User
 from carts.models import Cart, CartItem
 from .models import Order, OrderItem
+
+from django.db import transaction
+
+logger = logging.getLogger('orders')
 
 
 class OrderService:
@@ -16,18 +22,21 @@ class OrderService:
         for item in cart_items:
             if item.quantity > item.product.quantity:
                 raise ValueError(f"Not enough stock for product {item.product.name}")
-            
-        order = Order.objects.create(user=user)
 
-        user.balance -= order_total_price
-        user.save()
+        with transaction.atomic():            
+            order = Order.objects.create(user=user)
 
-        for item in cart_items:
-            item.product.quantity -= item.quantity
-            item.product.save()
+            user.balance -= order_total_price
+            user.save()
+
+            for item in cart_items:
+                item.product.quantity -= item.quantity
+                item.product.save()
+                
+                OrderItem.objects.create(order=order, product=item.product, quantity=item.quantity)
             
-            OrderItem.objects.create(order=order, product=item.product, quantity=item.quantity)
-        
-        cart.delete()
-        
-        return order
+            cart.delete()
+
+            logger.info(msg='created order', extra={'order_id': order.id})
+            
+            return order

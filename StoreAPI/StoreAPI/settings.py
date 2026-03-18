@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -131,4 +132,73 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
+}
+
+
+LOGS_DIR = BASE_DIR / 'logs'
+if not os.path.exists(LOGS_DIR):
+    os.makedirs(LOGS_DIR)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name} {module}.{funcName}:{lineno} - {message}',
+            'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S'
+        },
+        'order_format': {
+            'format': '[{asctime}] {levelname} - Order {order_id}: {message}',
+            'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S'
+        },
+        'simple': {
+            'format': '[{asctime}] {levelname} - {message}',
+            'style': '{',
+            'datefmt': '%H:%M:%S'
+        },
+    },
+    'handlers': {
+        'orders_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'orders.log',
+            'formatter': 'order_format',
+            'maxBytes': 11_000_000,
+            'backupCount': 5,
+            'encoding': 'utf-8'
+        },
+        'errors_file': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'errors.log',
+            'formatter': 'verbose',
+            'maxBytes': 11_000_000,
+            'backupCount': 5,
+            'encoding': 'utf-8'
+        },
+        'console': {
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'orders': {
+            'handlers': ['orders_file', 'console'],
+            'level': 'INFO',
+            'propagate': False
+        },
+        'django': {
+            'handlers': ['errors_file', 'console'],
+            'level': 'ERROR',
+            'propagate': False
+        },
+        'StoreAPI': {
+            'handlers': ['errors_file', 'console'],
+            'level': 'ERROR',
+            'propagate': False
+        }
+    }
 }
