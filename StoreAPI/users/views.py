@@ -1,8 +1,9 @@
 from rest_framework import generics, permissions, status
-from users.serializers import UserBalanceUpdateSerializer, UserLoginSerializer, UserRegistrationSerializer, UserSerializer
-from users.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
+
+from .serializers import UserBalanceUpdateSerializer, UserLoginSerializer, UserRegistrationSerializer, UserSerializer
+from .models import User
 
 
 class UserView(generics.RetrieveAPIView):

@@ -1,7 +1,9 @@
 import logging
 
 from users.models import User
+
 from carts.models import Cart, CartItem
+
 from .models import Order, OrderItem
 
 from django.db import transaction

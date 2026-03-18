@@ -1,5 +1,6 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+
 from .serializers import AddToCartSerializer, CartSerializer, CartItemSerializer
 from .services import CartService
 
@@ -50,3 +51,4 @@ class UpdateCartItemView(generics.UpdateAPIView):
         serializer.is_valid(raise_exception=True)
 
         CartService.update_cart_item_quantity(serializer.validated_data['product_id'], serializer.validated_data['quantity'])
+        return Response(status=status.HTTP_204_NO_CONTENT)
