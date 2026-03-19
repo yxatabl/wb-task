@@ -1,0 +1,67 @@
+name: Django Tests
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: github_actions
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_HOST: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.13'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        cd StoreAPI
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run tests
+      env:
+        SECRET_KEY: "secretkey"
+        DEBUG: "False"
+        ALLOWED_HOSTS: "localhost,127.0.0.1"
+        
+        DB_ENGINE: django.db.backends.postgresql
+        DB_NAME: github_actions
+        DB_USER: postgres
+        DB_PASSWORD: postgres
+        DB_HOST: postgres
+        DB_PORT: 5432
+        
+        JWT_ACCESS_TOKEN_MINUTES: 60
+        JWT_REFRESH_TOKEN_DAYS: 1
+        
+        DJANGO_SUPERUSER_USERNAME: testadmin
+        DJANGO_SUPERUSER_EMAIL: test@example.com
+        DJANGO_SUPERUSER_PASSWORD: testpass123
+      run: |
+        cd StoreAPI
+        python manage.py migrate
+        python manage.py test -v 2
