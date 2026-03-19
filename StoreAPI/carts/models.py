@@ -25,3 +25,7 @@ class CartItem(models.Model):
         related_name='products'
     )
     quantity = models.PositiveIntegerField(default=1)
+
+
+    class Meta:
+        unique_together = ['cart', 'product']

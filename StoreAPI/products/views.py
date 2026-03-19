@@ -13,7 +13,7 @@ class IsAdminOrReadOnly(permissions.BasePermission):
 
 
 class ProductList(generics.ListCreateAPIView):
-    queryset = Product.objects.all()
+    queryset = Product.objects.all().order_by('id')
     serializer_class = ProductSerializer
     permission_classes = [IsAdminOrReadOnly]
 

@@ -28,6 +28,11 @@ class UserBalanceUpdateSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+    
+    def validate(self, attrs):
+        if attrs['amount'] <= 0:
+            raise serializers.ValidationError({"amount": "Amount must be greater than 0"})
+        return attrs
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
