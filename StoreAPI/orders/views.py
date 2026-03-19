@@ -6,6 +6,8 @@ from .services import OrderService
 from .models import Order
 from .exceptions import OrderError
 
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample
+
 
 class OrderListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -27,6 +29,41 @@ class OrderListCreateView(generics.ListCreateAPIView):
             return Response({
                 'error': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
+    
+    @extend_schema(
+        summary="Список заказов",
+        description="Возвращает все заказы текущего пользователя",
+        responses={200: OrderSerializer(many=True)},
+        tags=['orders'],
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+    
+    @extend_schema(
+        summary="Создать заказ",
+        description="Создает новый заказ из товаров в корзине",
+        request=None,
+        responses={
+            201: OrderSerializer,
+            400: OpenApiResponse(description="Ошибка создания заказа (недостаточно средств/товаров)")
+        },
+        tags=['orders'],
+        examples=[
+            OpenApiExample(
+                'Успешный ответ',
+                value={
+                    'id': 1,
+                    'order_items': [
+                        {'product_id': 1, 'quantity': 2},
+                        {'product_id': 2, 'quantity': 1}
+                    ]
+                },
+                response_only=True,
+            ),
+        ],
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
 
 
 class OrderDetailView(generics.RetrieveAPIView):

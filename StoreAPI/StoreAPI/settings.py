@@ -134,6 +134,7 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
+    'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
 }
 
 
@@ -203,4 +204,57 @@ LOGGING = {
             'propagate': False
         }
     }
+}
+
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Store API',
+    'DESCRIPTION': """
+    API для интернет-магазина с управлением продуктами, корзиной, заказами и пользователями.
+    
+    ## Возможности:
+    * Управление продуктами (только для админов)
+    * Корзина покупок
+    * Оформление заказов
+    * Управление балансом пользователя
+    * JWT аутентификация
+    """,
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SCHEMA_PATH_PREFIX': r'/api/',
+    
+    'TAGS': [
+        {'name': 'products', 'description': 'Управление товарами'},
+        {'name': 'cart', 'description': 'Корзина пользователя'},
+        {'name': 'orders', 'description': 'Заказы'},
+        {'name': 'users', 'description': 'Управление пользователями и аутентификация'},
+    ],
+    
+    'SWAGGER_UI_SETTINGS': {
+        'persistAuthorization': True,
+        'displayOperationId': True,
+    },
+    
+    'SECURITY': [
+        {
+            'BearerAuth': {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+            }
+        }
+    ],
+    
+    'COMPONENT_SPLIT_REQUEST': True,
+}
+
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
+        }
+    },
+    'USE_SESSION_AUTH': False,
 }
