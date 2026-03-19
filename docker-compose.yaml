@@ -1,0 +1,55 @@
+services:
+  db:
+    image: postgres:15
+    container_name: storeapi_db
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - storeapi_network
+    env_file:
+      - .env
+
+  web:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: storeapi_web
+    restart: always
+    command: >
+      sh -c "
+             python manage.py migrate &&
+             python manage.py createsuperuser --noinput || true &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./StoreAPI:/app/StoreAPI
+      - logs_volume:/app/StoreAPI/logs
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    working_dir: /app/StoreAPI
+    networks:
+      - storeapi_network
+
+volumes:
+  postgres_data:
+  logs_volume:
+
+networks:
+  storeapi_network:
+    driver: bridge

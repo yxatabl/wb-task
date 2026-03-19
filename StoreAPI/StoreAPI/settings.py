@@ -24,12 +24,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-p%9!ohh-c=&iw1eqpzi74(dl-3=7$hm6o&k^0n#@mwxtzx^vr1'
+SECRET_KEY = SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key-for-dev')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 
 # Application definition
@@ -83,8 +83,12 @@ WSGI_APPLICATION = 'StoreAPI.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME', 'store_db'),
+        'USER': os.getenv('DB_USER', 'postgres'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
 
@@ -212,14 +216,13 @@ LOGGING = {
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Store API',
     'DESCRIPTION': """
-    API для интернет-магазина с управлением продуктами, корзиной, заказами и пользователями.
+    API для интернет-магазина с JWT аутентификацией
     
-    ## Возможности:
-    * Управление продуктами (только для админов)
-    * Корзина покупок
-    * Оформление заказов
-    * Управление балансом пользователя
-    * JWT аутентификация
+    Возможности:
+    - Управление продуктами (для администраторов)
+    - Корзина
+    - Оформление заказов
+    - JWT аутентификация
     """,
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
@@ -264,9 +267,8 @@ SWAGGER_SETTINGS = {
 
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=int(os.getenv('JWT_ACCESS_TOKEN_MINUTES', 60))),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=int(os.getenv('JWT_REFRESH_TOKEN_DAYS', 1))),
     
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
